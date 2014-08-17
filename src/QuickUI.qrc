@@ -1,0 +1,18 @@
+ <!DOCTYPE RCC><RCC version="1.0">
+ <qresource>
+     <file alias="connect.png">res/connect.png</file>
+     <file alias="disconnect.png">res/disconnect.png</file>
+     <file alias="download.png">res/page_white_put.png</file>
+     <file alias="upload.png">res/page_white_get.png</file>
+     <file alias="refresh.png">res/arrow_rotate_clockwise.png</file>
+     <file alias="account.png">res/user.png</file>
+     <file alias="save.png">res/disk.png</file>
+     <file alias="open.png">res/folder.png</file>
+     <file alias="new.png">res/page_white_text.png</file>
+     <file alias="undo.png">res/arrow_undo.png</file>
+     <file alias="redo.png">res/arrow_redo.png</file>    
+     <file alias="cut.png">res/cut.png</file>
+     <file alias="copy.png">res/page_white_copy.png</file>
+     <file alias="paste.png">res/page_white_paste.png</file>       
+ </qresource>
+ </RCC>
