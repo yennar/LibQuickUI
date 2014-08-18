@@ -2,6 +2,8 @@
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from QXApplication import QXApplication
+
 import platform
 import sys
 import re
@@ -118,16 +120,21 @@ class QXFileSelector(QWidget):
 
 class QXCheckBoxes(QWidget):
     optionsChanged = pyqtSignal(list)
-    def __init__(self,init,parent = None):
+    def __init__(self,init,radio = False,parent = None):
         QWidget.__init__(self,parent)
         
         self.chk = {}
         self.init = init
+        self.radio = radio
+        
         l = QVBoxLayout()
         l.setMargin(0)
         
         for item in init:
-            chk = QCheckBox(item[0])
+            if radio:
+                chk = QRadioButton(item[0])
+            else:
+                chk = QCheckBox(item[0])
             chk.setChecked(item[2])
             self.chk[item[1]] = chk
             
@@ -162,6 +169,19 @@ class QXStaticConfig(QMainWindow):
         self.pageID = -1
         self.setUnifiedTitleAndToolBarOnMac(True)   
         self.resize(640,480)
+        
+        if QApplication.organizationName() == '':
+            QApplication.setOrganizationName('TinyUtils')
+        
+        if QApplication.applicationName() == '':
+            QApplication.setApplicationName(QXApplication.appName())
+            
+        appName = QApplication.applicationName()
+        
+        if QDir(QDir.currentPath()).exists("%s.rc" % appName):
+            self.settings = QSettings("%s/%s.rc" % (QDir.currentPath(),appName),QSettings.IniFormat)
+        else:
+            self.settings = QSettings()
         
     def cloOnAction(self,page_id):
         def onAction():
@@ -207,13 +227,13 @@ class QXStaticConfig(QMainWindow):
         if len(group_items) == 1:
             
             page = QWidget()
-            lay_groups = self.createGroup(group_items[0],page)
+            lay_groups = self.createGroup(conf['title'],group_items[0],page)
             page.setLayout(lay_groups)
         else:
             pagex = QTabWidget()
             for item in group_items:
                 sub_page = QWidget()
-                lay_groups = self.createGroup(item,sub_page)                
+                lay_groups = self.createGroup(conf['title'],item,sub_page)                
                 sub_page.setLayout(lay_groups)
                 pagex.addTab(sub_page,item['group_title'])
             lay = QHBoxLayout()
@@ -222,25 +242,47 @@ class QXStaticConfig(QMainWindow):
             page.setLayout(lay)            
                 
         self.mainWidget.addWidget(page)
-        
     
-    def createGroup(self,conf_group_item,parent):
+    def cloSync(self,key,typ):
+        def onSync(*kargs):
+            if typ == 'str':
+                self.settings.setValue(key,kargs[0])
+            if typ == 'dict':
+                self.settings.setValue(key,json.dumps(kargs[0]))
+                
+            self.settings.sync()
+        return onSync
+    
+    def createGroup(self,key,conf_group_item,parent):
         lay = QVBoxLayout()
 
         for section in conf_group_item['items']:
             lay_group = QGridLayout()
             group = QGroupBox(section['section_title'],parent)
             index = 0
+            key_sec = key + '/' + section['section_title']
             for item in section['items']:
                 label = QLabel(item['item_title'])
                 label.setAlignment(Qt.AlignLeft)
+                key_item = key_sec + '/' + item['item_title']
+                
                 if item['item_type'] == self.Text:
                     try:
                         d = item['item_default']
                     except:
                         d = ''
+                    d = str(self.settings.value(key_item,d).toString())
+                    try:
+                        passwd = item['item_data'][0]
+                    except:
+                        passwd = False
+
                     widget = QLineEdit(d,group)
+                    if passwd:
+                        widget.setEchoMode(QLineEdit.Password)
+                    item['call_back'](d)    
                     widget.textChanged.connect(item['call_back'])
+                    widget.textChanged.connect(self.cloSync(key_item,'str'))
                     lay_group.addWidget(label,index,0)
                     lay_group.addWidget(widget,index + 1,0,1,2)
                     index += 2
@@ -249,6 +291,7 @@ class QXStaticConfig(QMainWindow):
                         d = int(item['item_default'])
                     except:
                         d = 0
+                    d = self.settings.value(key_item,d).toInt()[0]
                     try:
                         vmin = item['item_data'][0]
                         vmax = item['item_data'][1]
@@ -265,8 +308,9 @@ class QXStaticConfig(QMainWindow):
                     widget.setRange(vmin,vmax)
                     widget.setValue(d)
                     #widget.setValidator(QValidator(vmin,vmax,4,widget))
-                    
+                    item['call_back'](d) 
                     widget.valueChanged.connect(item['call_back'])
+                    widget.valueChanged.connect(self.cloSync(key_item,'str'))
                     lay_group.addWidget(label,index,0)
                     lay_group.addWidget(widget,index + 1,0,1,2)
                     index += 2
@@ -275,10 +319,12 @@ class QXStaticConfig(QMainWindow):
                         d = item['item_default']
                     except:
                         d = QColor(0,0,0)
-
+                    name_color = self.settings.value(key_item,d.name()).toString()
+                    d.setNamedColor(name_color)
                     widget = QXColorSelector(d,group)
-                    
+                    widget.colorChanged.connect(self.cloSync(key_item,'str'))
                     widget.colorChanged.connect(item['call_back'])
+                    item['call_back'](d) 
                     lay_group.addWidget(label,index,0)
                     lay_group.addWidget(widget,index + 1,0,1,2)
                     index += 2
@@ -287,10 +333,12 @@ class QXStaticConfig(QMainWindow):
                         d = item['item_default']
                     except:
                         d = QApplication.font()
-
+                    name_font = self.settings.value(key_item,d.toString()).toString()
+                    d.fromString(name_font)
                     widget = QXFontSelector(d,group)
-                    
+                    widget.fontChanged.connect(self.cloSync(key_item,'str'))
                     widget.fontChanged.connect(item['call_back'])
+                    item['call_back'](d) 
                     lay_group.addWidget(label,index,0)
                     lay_group.addWidget(widget,index + 1,0,1,2)
                     index += 2  
@@ -299,6 +347,7 @@ class QXStaticConfig(QMainWindow):
                         d = item['item_default']
                     except:
                         d = QDir.currentPath()
+                    d = str(self.settings.value(key_item,d).toString())
                     path_or_file = False    
                     try:
                         flt = item['item_data']
@@ -308,12 +357,13 @@ class QXStaticConfig(QMainWindow):
                         flt = "All Files (*.*)"
 
                     widget = QXFileSelector(d,path_or_file,flt,group)
-                    
+                    widget.fileChanged.connect(self.cloSync(key_item,'str'))
                     widget.fileChanged.connect(item['call_back'])
+                    item['call_back'](d) 
                     lay_group.addWidget(label,index,0)
                     lay_group.addWidget(widget,index + 1,0,1,2)
                     index += 2   
-                elif item['item_type'] == self.Options:
+                elif item['item_type'] == self.Options or item['item_type'] == self.Selection:
                     try:
                         d = item['item_default']
                     except:
@@ -321,10 +371,18 @@ class QXStaticConfig(QMainWindow):
                             d = item['item_data']
                         except:
                             d = []
-
-                    widget = QXCheckBoxes(d,self)
+                    name_dict = str(self.settings.value(key_item,d).toString())
+                    if name_dict != '':
+                        d = json.loads(name_dict)
                     
+                    radio = False
+                    if item['item_type'] == self.Selection:
+                        radio = True
+                        
+                    widget = QXCheckBoxes(d,radio,self)
+                    widget.optionsChanged.connect(self.cloSync(key_item,'dict'))
                     widget.optionsChanged.connect(item['call_back'])
+                    item['call_back'](d)
                     lay_group.addWidget(label,index,0)
                     lay_group.addWidget(widget,index + 1,0,1,2)
                     index += 2                     
@@ -369,7 +427,15 @@ if __name__ == '__main__':
                     {'item_title' : 'Edu', 'item_type' : QXStaticConfig.Options,'item_default' : [
                              ['Prim School','optPrim',True],
                              ['Mid School','optMid',False],
-                        ], 'call_back' : w.nullCallback }
+                        ], 'call_back' : w.nullCallback },
+                    {'item_title' : 'Adv Edu', 'item_type' : QXStaticConfig.Selection,'item_default' : [
+                             ['Prim School','optPrim',True],
+                             ['Mid School','optMid',False],
+                        ], 'call_back' : w.nullCallback },
+                    {'item_title' : 'Adv Edu', 'item_type' : QXStaticConfig.Selection,'item_default' : [
+                             ['Prim School','optPrim',True],
+                             ['Mid School','optMid',False],
+                        ], 'call_back' : w.nullCallback }                     
                     ]},
                 {'section_title' : 'bar', 'items' : []}
             ]}
