@@ -13,6 +13,7 @@
      <file alias="redo.png">res/arrow_redo.png</file>    
      <file alias="cut.png">res/cut.png</file>
      <file alias="copy.png">res/page_white_copy.png</file>
-     <file alias="paste.png">res/page_white_paste.png</file>       
+     <file alias="paste.png">res/page_white_paste.png</file> 
+     <file alias="preferences.png">res/cog.png</file>       
  </qresource>
  </RCC>
