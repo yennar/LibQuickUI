@@ -4,6 +4,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from QXAction import *
 from QXApplication import *
+from QXStaticConfig import *
 
 import platform
 import sys
@@ -43,11 +44,16 @@ class QXSingleDocMainWindow(QMainWindow):
         self.setFileReadOnly(False)
         self._fileName = None
         self.setFileCreateByMe(False)
+        
+        
 
         self.actionFileNew = QXAction('&New',self,triggered=self.ActionFileNew)
         self.actionFileOpen = QXAction('&Open',self,triggered=self.ActionFileOpen)
         self.actionFileSave = QXAction('&Save',self,triggered=self.ActionFileSave)
         self.actionFileSaveAs = QXAction('Save &As',self,triggered=self.ActionFileSaveAs)
+        
+        self.actionPreferences = QXAction('Preferences...',self,triggered=self.ActionPreferences)
+        
         self.actionQuit = QXAction('Quit',self,triggered=self.close)
         
         self.actionEditUndo = QXAction('&Undo',self,triggered=self.onEditUndo)
@@ -74,6 +80,9 @@ class QXSingleDocMainWindow(QMainWindow):
             self.tbrMain.addAction(self.actionEditCut)
             self.tbrMain.addAction(self.actionEditCopy)
             self.tbrMain.addAction(self.actionEditPaste)
+            self.tbrMain.addSeparator()
+            
+            self.tbrMain.addAction(self.actionPreferences)
                         
         self.setUnifiedTitleAndToolBarOnMac(True)    
         
@@ -85,6 +94,11 @@ class QXSingleDocMainWindow(QMainWindow):
             mnuFile.addAction(self.actionFileSave)
             mnuFile.addAction(self.actionFileSaveAs)
             mnuFile.addSeparator()
+            
+            if platform.system() == 'Linux':
+                 mnuFile.addSeparator()
+                 mnuFile.addAction(self.actionPreferences)
+                 
             mnuFile.addAction(self.actionQuit)
             
             mnuEdit = self.mnuMain.addMenu('&Edit')
@@ -94,6 +108,22 @@ class QXSingleDocMainWindow(QMainWindow):
             mnuEdit.addAction(self.actionEditCut)
             mnuEdit.addAction(self.actionEditCopy)   
             mnuEdit.addAction(self.actionEditPaste) 
+            
+            if platform.system() == 'Windows':
+                 mnuEdit.addSeparator()
+                 mnuEdit.addAction(self.actionPreferences)            
+
+        self.preferenceDialog = QXStaticConfig()
+        self.preferenceDialog.setWindowTitle("%s - Preferences" % QXApplication.appName())
+    
+    def addPreferencePage(self,title,icon,conf):
+        self.preferenceDialog.addConfigPage(
+            {
+                'title' : title,
+                'icon'  : icon,
+                'items' : conf
+            }
+        )   
         
     def setFileDialogSuffix(self,s):
         allFormat = []
@@ -107,7 +137,9 @@ class QXSingleDocMainWindow(QMainWindow):
         if not re.match(r'.*;;\s*$',s):
             s = s + ';;'
         self._fileSaveAsSuffix = s + allFormatStr
-        
+    
+    def setFileSaveAsSuffix(self,s):  
+        self._fileSaveAsSuffix = s
         
     def setFileCreateByMe(self,t):
         self._fileCreateByMe = t
@@ -167,7 +199,9 @@ class QXSingleDocMainWindow(QMainWindow):
             if self.onFileSaveAs(fileName):            
                 self.ActionFileLoad(fileName)
 
-    
+    def ActionPreferences(self):
+        self.preferenceDialog.setAttribute(Qt.WA_DeleteOnClose,False)
+        self.preferenceDialog.show()
         
 
     def onFileLoad(self):

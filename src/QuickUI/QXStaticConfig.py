@@ -10,6 +10,23 @@ import re
 import quick_ui_res
 import json
 
+class QXCheckBox(QCheckBox):
+    
+    checkedChanged = pyqtSignal(bool)
+    
+    def __init__(self,text,init,parent = None):
+        QCheckBox.__init__(self,parent)
+        self.setTristate(False)
+        self.stateChanged.connect(self.onStateChange)
+        self.setText(text)
+        self.setChecked(init)
+        
+    def onStateChange(self,s):
+        b = False
+        if s > 0:
+            b = True
+        self.checkedChanged.emit(b)
+
 class QXFontSelector(QLineEdit):
     fontChanged = pyqtSignal(QFont)
     
@@ -29,10 +46,11 @@ class QXFontSelector(QLineEdit):
     def mouseReleaseEvent(self,e):
         c = QFontDialog(self.font,self)
         c.setWindowTitle("Get Font")
-        c.setOption(QFontDialog.NoButtons)
-        c.currentFontChanged.connect(self.onFontChange)
-        c.exec_()
-        self.onFontChange(self.font)
+        if platform.system() == 'Darwin':
+            c.setOption(QFontDialog.NoButtons)
+            c.currentFontChanged.connect(self.onFontChange)
+        if c.exec_():
+            self.onFontChange(c.selectedFont())
         
 
     
@@ -55,10 +73,11 @@ class QXColorSelector(QLineEdit):
     def mouseReleaseEvent(self,e):
         c = QColorDialog(self.color,self)
         c.setWindowTitle("Get Color")
-        c.setOption(QColorDialog.NoButtons)
-        c.currentColorChanged.connect(self.onColorChange)
-        c.exec_()
-        self.onColorChange(c.currentColor())
+        if platform.system() == 'Darwin':
+            c.setOption(QColorDialog.NoButtons)
+            c.currentColorChanged.connect(self.onColorChange)
+        if c.exec_():
+            self.onColorChange(c.currentColor())
         
     def paint(self):
         color = self.color
@@ -159,16 +178,41 @@ class QXStaticConfig(QMainWindow):
     File = 5
     Options = 6
     Selection = 7
+    YesNo = 8
     
     def __init__(self,parent = None):
         QMainWindow.__init__(self,parent)
         
         self.tbrMain = self.addToolBar("Main")
-        self.mainWidget = QStackedWidget()        
-        self.setCentralWidget(self.mainWidget)
-        self.pageID = -1
+        self.tbrMain.setFloatable(False)
+        self.tbrMain.setMovable(False)
+        self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.mainWidget = QStackedWidget() 
+        
+        if platform.system == 'Darwin':                   
+            self.setCentralWidget(self.mainWidget)
+        else:
+            self.btns = QDialogButtonBox()
+            self.btnExport = self.btns.addButton("Export...",QDialogButtonBox.ActionRole)
+            self.btnImport = self.btns.addButton("Import...",QDialogButtonBox.ActionRole)
+            self.btnRestoreDefaults = self.btns.addButton(QDialogButtonBox.RestoreDefaults)
+            self.btnClose = self.btns.addButton(QDialogButtonBox.Close)
+
+            self.btns.clicked.connect(self.onDlgBtnBoxClicked)
+            
+            self.central = QWidget()
+            lay = QVBoxLayout()
+            lay.addWidget(self.mainWidget)
+            lay.addWidget(self.btns)
+            self.central.setLayout(lay)
+            self.setCentralWidget(self.central)
+        
+        
+        
+        self.pageID = 0
         self.setUnifiedTitleAndToolBarOnMac(True)   
-        self.resize(640,480)
+        self.setMinimumWidth(640)
+        #self.resize(640,480)
         
         if QApplication.organizationName() == '':
             QApplication.setOrganizationName('TinyUtils')
@@ -183,12 +227,68 @@ class QXStaticConfig(QMainWindow):
         else:
             self.settings = QSettings()
         
+        self.confs = []
+        self.pages = []
+
+    def onDlgBtnBoxClicked(self,btn):
+        if btn == self.btnExport:
+            self.doExport()
+        elif btn == self.btnImport:
+            self.doImport()
+        elif btn == self.btnRestoreDefaults:
+            self.doReset()
+        elif btn == self.btnClose:
+            self.close()
+
+    def doReload(self):
+        for i,conf in enumerate(self.confs):
+            self.setupConfigPage(conf, i)
+
+    def doReset(self):
+        self.settings.clear()
+        self.settings.sync()
+        self.doReload()
+
+    def doExport(self):
+
+        file_export = QFileDialog.getSaveFileName(self,"Export",QDir.currentPath(),"Configuration (*.ini);; All Files (*.*)")
+        if not file_export is None and file_export != '':
+            settings = QSettings(file_export,QSettings.IniFormat,self)
+            for k in self.settings.allKeys():
+                settings.setValue(k,self.settings.value(k))
+            settings.sync()
+        
+    def doImport(self):
+
+        file_import = QFileDialog.getOpenFileName(self,"Export",QDir.currentPath(),"Configuration (*.ini);; All Files (*.*)")
+        if not file_import is None and file_import != '' and QDir().exists(file_import):
+            settings = QSettings(file_import,QSettings.IniFormat,self)
+            for k in settings.allKeys():
+                self.settings.setValue(k,settings.value(k))
+            self.settings.sync()        
+            self.doReload()
+            
+    def doClose(self):
+        self.close()
+        
     def cloOnAction(self,page_id):
         def onAction():
             self.mainWidget.setCurrentIndex(page_id)
         return onAction
-        
+    
     def addConfigPage(self,conf):
+        
+        page = QWidget()
+        self.confs.append(conf)
+        self.pages.append(page)
+        
+        action = QAction(conf['icon'],conf['title'],self,triggered = self.cloOnAction(self.pageID))
+        self.tbrMain.addAction(action)
+        self.setupConfigPage(conf, self.pageID)
+        self.mainWidget.addWidget(page)
+        self.pageID += 1
+        
+    def setupConfigPage(self,conf,pageID):
         """
         conf = {
             'title' : str
@@ -216,32 +316,35 @@ class QXStaticConfig(QMainWindow):
             ]
         }
         """
-        self.pageID += 1
-        
-        action = QAction(conf['icon'],conf['title'],self,triggered = self.cloOnAction(self.pageID))
-        self.tbrMain.addAction(action)
+
         
         
         group_items = conf['items']
-
-        if len(group_items) == 1:
-            
-            page = QWidget()
-            lay_groups = self.createGroup(conf['title'],group_items[0],page)
+        page = self.pages[pageID]
+        self.mainWidget.removeWidget(page)
+        page.deleteLater()
+        page = QWidget()
+        self.mainWidget.insertWidget(pageID,page)
+        
+        self.pages[pageID] = page
+        
+        if len(group_items) == 1:         
+            lay_groups = self.createGroup("%d-0-%s" % ( pageID , conf['title'] ),group_items[0],page)
             page.setLayout(lay_groups)
         else:
             pagex = QTabWidget()
-            for item in group_items:
+            for i,item in enumerate(group_items):
                 sub_page = QWidget()
-                lay_groups = self.createGroup(conf['title'],item,sub_page)                
+                lay_groups = self.createGroup("%d-%d-%s" % ( pageID , i , conf['title'] ),item,sub_page)              
                 sub_page.setLayout(lay_groups)
                 pagex.addTab(sub_page,item['group_title'])
-            lay = QHBoxLayout()
+                     
+
+            lay = QHBoxLayout()  
             lay.addWidget(pagex)
-            page = QWidget()
             page.setLayout(lay)            
                 
-        self.mainWidget.addWidget(page)
+        
     
     def cloSync(self,key,typ):
         def onSync(*kargs):
@@ -286,6 +389,20 @@ class QXStaticConfig(QMainWindow):
                     lay_group.addWidget(label,index,0)
                     lay_group.addWidget(widget,index + 1,0,1,2)
                     index += 2
+                elif item['item_type'] == self.YesNo:
+                    try:
+                        d = item['item_default']
+                    except:
+                        d = False
+                    d = self.settings.value(key_item,d).toBool()
+                    
+                    widget = QXCheckBox(item['item_title'],d,group)
+
+                    item['call_back'](d) 
+                    widget.checkedChanged.connect(item['call_back'])
+                    widget.checkedChanged.connect(self.cloSync(key_item,'str'))
+                    lay_group.addWidget(widget,index,0,1,2)
+                    index += 1
                 elif item['item_type'] == self.Range:
                     try:
                         d = int(item['item_default'])
@@ -420,10 +537,11 @@ if __name__ == '__main__':
         'title' : 'bar',
         'icon'  : QIcon(':/paste.png'),
         'items' : [
-            {'group_title' : 'bar', 'items' : []},
-            {'group_title' : 'car' , 'items' : [
+            {'group_title' : 'group1', 'items' : []},
+            {'group_title' : 'group2' , 'items' : [
                 {'section_title' : 'foo', 'items' : [
                     {'item_title' : 'Name', 'item_type' : QXStaticConfig.Text, 'call_back' : w.nullCallback },
+                    {'item_title' : 'May', 'item_type' : QXStaticConfig.YesNo, 'call_back' : w.nullCallback },
                     {'item_title' : 'Edu', 'item_type' : QXStaticConfig.Options,'item_default' : [
                              ['Prim School','optPrim',True],
                              ['Mid School','optMid',False],
