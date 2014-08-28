@@ -242,6 +242,7 @@ class QXStaticConfig(QMainWindow):
         self.pageID = 0
         self.setUnifiedTitleAndToolBarOnMac(True)   
         self.setMinimumWidth(640)
+        self.setMinimumHeight(480)
         #self.resize(640,480)
         
         if QApplication.organizationName() == '':
@@ -527,7 +528,19 @@ class QXStaticConfig(QMainWindow):
                             d = []
                     name_dict = str(self.settings.value(key_item,d).toString())
                     if name_dict != '':
-                        d = json.loads(name_dict)
+                        ds = json.loads(name_dict)
+
+                    if len(d) != len(ds):
+                        ddict = {}
+                        for item_d in ds:
+                            ddict[item_d[0] + item_d[1]] = item_d[2]
+                        nd = []
+                        for item_d in d:
+                            key = item_d[0] + item_d[1]
+                            if key in ddict.keys():
+                                item_d[2] = ddict[key]
+                            nd.append(item_d)
+                        d = nd
                     
                     sub_type = QXSelects.SUB_TYPE_CHECKBOX
                     if item['item_type'] == self.Selection:
