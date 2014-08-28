@@ -5,7 +5,7 @@ from PyQt4.QtGui import *
 from QXAction import *
 from QXApplication import *
 from QXStaticConfig import *
-
+from QXToolBar import *
 import platform
 import sys
 import re
@@ -47,14 +47,14 @@ class QXSingleDocMainWindow(QMainWindow):
         
         
 
-        self.actionFileNew = QXAction('&New',self,triggered=self.ActionFileNew)
-        self.actionFileOpen = QXAction('&Open',self,triggered=self.ActionFileOpen)
-        self.actionFileSave = QXAction('&Save',self,triggered=self.ActionFileSave)
-        self.actionFileSaveAs = QXAction('Save &As',self,triggered=self.ActionFileSaveAs)
+        self.actionDocumentNew = QXAction('&New',self,triggered=self.ActionFileNew)
+        self.actionDocumentOpen = QXAction('&Open',self,triggered=self.ActionFileOpen)
+        self.actionDocumentSave = QXAction('&Save',self,triggered=self.ActionFileSave)
+        self.actionDocumentSaveAs = QXAction('Save &As',self,triggered=self.ActionFileSaveAs)
         
-        self.actionPreferences = QXAction('Preferences...',self,triggered=self.ActionPreferences)
+        self.actionConfigure = QXAction('Preferences...',self,triggered=self.ActionPreferences)
         
-        self.actionQuit = QXAction('Quit',self,triggered=self.close)
+        self.actionApplicationExit = QXAction('Quit',self,triggered=self.close)
         
         self.actionEditUndo = QXAction('&Undo',self,triggered=self.onEditUndo)
         self.actionEditRedo = QXAction('&Redo',self,triggered=self.onEditRedo)
@@ -67,9 +67,9 @@ class QXSingleDocMainWindow(QMainWindow):
         if hasToolBar:
             self.tbrMain = self.addToolBar("Main")
             
-            self.tbrMain.addAction(self.actionFileNew)
-            self.tbrMain.addAction(self.actionFileOpen)
-            self.tbrMain.addAction(self.actionFileSave)
+            self.tbrMain.addAction(self.actionDocumentNew)
+            self.tbrMain.addAction(self.actionDocumentOpen)
+            self.tbrMain.addAction(self.actionDocumentSave)
             
             self.tbrMain.addSeparator()
             
@@ -82,24 +82,24 @@ class QXSingleDocMainWindow(QMainWindow):
             self.tbrMain.addAction(self.actionEditPaste)
             self.tbrMain.addSeparator()
             
-            self.tbrMain.addAction(self.actionPreferences)
+            self.tbrMain.addAction(self.actionConfigure)
                         
         self.setUnifiedTitleAndToolBarOnMac(True)    
         
         if hasMenuBar:
             self.mnuMain = self.menuBar()
             mnuFile = self.mnuMain.addMenu('&File')
-            mnuFile.addAction(self.actionFileNew)
-            mnuFile.addAction(self.actionFileOpen)
-            mnuFile.addAction(self.actionFileSave)
-            mnuFile.addAction(self.actionFileSaveAs)
+            mnuFile.addAction(self.actionDocumentNew)
+            mnuFile.addAction(self.actionDocumentOpen)
+            mnuFile.addAction(self.actionDocumentSave)
+            mnuFile.addAction(self.actionDocumentSaveAs)
             mnuFile.addSeparator()
             
             if platform.system() == 'Linux':
-                 mnuFile.addSeparator()
-                 mnuFile.addAction(self.actionPreferences)
+                mnuFile.addSeparator()
+                mnuFile.addAction(self.actionConfigure)
                  
-            mnuFile.addAction(self.actionQuit)
+            mnuFile.addAction(self.actionApplicationExit)
             
             mnuEdit = self.mnuMain.addMenu('&Edit')
             mnuEdit.addAction(self.actionEditUndo)
@@ -110,11 +110,20 @@ class QXSingleDocMainWindow(QMainWindow):
             mnuEdit.addAction(self.actionEditPaste) 
             
             if platform.system() == 'Windows':
-                 mnuEdit.addSeparator()
-                 mnuEdit.addAction(self.actionPreferences)            
+                mnuEdit.addSeparator()
+                mnuEdit.addAction(self.actionConfigure)            
 
         self.preferenceDialog = QXStaticConfig()
         self.preferenceDialog.setWindowTitle("%s - Preferences" % QXApplication.appName())
+        
+        self.addPreferencePage('General',QXApplication.findIcon('configure','default',self.preferenceDialog.cloGetActionSetIcon(0)),[{'group_title' : '' , 'items' : [
+                      {'section_title' : 'Theme', 'items' : [
+                        {'item_title' : 'Icon Theme',
+                         'item_type' : QXStaticConfig.List ,
+                         'item_default' : QXApplication.getIconThemeList() ,
+                         'call_back' : QXApplication.getIconThemeCallBack() }
+                    ]}
+                ]}])
     
     def addPreferencePage(self,title,icon,conf):
         self.preferenceDialog.addConfigPage(
@@ -259,7 +268,7 @@ class QXSingleDocMainWindow(QMainWindow):
             
 if __name__ == '__main__':
     import sys
-    app = QApplication(sys.argv)
+    app = QXApplication(sys.argv,'QuickUI')
     w = QXSingleDocMainWindow()
     w.show()
     app.exec_()

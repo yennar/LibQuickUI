@@ -2,6 +2,7 @@
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from QXApplication import *
 import platform
 import sys
 import re
@@ -26,11 +27,8 @@ class QXAction(QAction):
         if not kq.isEmpty():
             self.setToolTip("%s (%s)" % (self.text().replace('&','').replace('.',''),kq.toString(QKeySequence.NativeText)))
         
-        image_name = "%s.png" % self.text().replace('&','').replace('.','').toLower()
-        dir = QDir(QDir.currentPath());
-        if dir.exists(image_name):
-            self.setIcon(QIcon(image_name))
-        else:
-            image_name = ":" + image_name
-            if dir.exists(image_name):
-                self.setIcon(QIcon(image_name))   
+        image_name = self.text().replace('&','').replace('.','').toLower()
+        if image_name == 'preferences':
+            image_name = 'configure'
+        self.setIcon(QXApplication.findIcon(image_name,'default',self.setIcon)) 
+                  

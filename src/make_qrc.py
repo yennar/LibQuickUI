@@ -22,7 +22,14 @@ if not fout.open(QIODevice.WriteOnly):
 fout.write("<!DOCTYPE RCC><RCC version=\"1.0\">\n<qresource>\n")
 
 compatibility_items = {}
+default_theme_name = None
 
+for themeEntry in iconRoot.entryInfoList(FilterDir):
+    theme_name = themeEntry.fileName()
+    default_theme_name = theme_name
+    if default_theme_name == 'default':
+        break
+    
 for themeEntry in iconRoot.entryInfoList(FilterDir):
     theme_name = themeEntry.fileName()
     theme_qrc_path = themeEntry.filePath()
@@ -31,6 +38,12 @@ for themeEntry in iconRoot.entryInfoList(FilterDir):
     default_size_name = ''
     default_size_qrc_path = ''
     size_max = 1024
+
+    if themeRoot.exists('index.theme'):
+        fout.write("    <file alias=\"usr/share/icons/%s/index.theme\">%s/index.theme</file>\n" % (theme_name,theme_qrc_path)) 
+    else:
+        continue
+    
     # default rule 1 : smallest size become default
     for sizeEntry in themeRoot.entryInfoList(FilterDir):
         size_name = sizeEntry.fileName()
@@ -58,18 +71,19 @@ for themeEntry in iconRoot.entryInfoList(FilterDir):
             categoryRoot = QDir(categoryEntry.filePath())
             for fileEntry in categoryRoot.entryList(['*.png'],QDir.Files):
                 file_full_name = size_qrc_path + '/' + category_name + '/' + fileEntry
-                # compatibility
-                if default_size_name == size_name:
-                    if fileEntry == 'configure.png':
-                        compatibility_items['preferences.png'] = file_full_name
-                    compatibility_entry = re.sub(r'^[^\-]+\-','',str(fileEntry))
-                    compatibility_items[compatibility_entry] = file_full_name
+                if theme_name == default_theme_name:
+                    # compatibility
+                    if default_size_name == size_name:
+                        if fileEntry == 'configure.png':
+                            compatibility_items['preferences.png'] = file_full_name
+                        compatibility_entry = re.sub(r'^[^\-]+\-','',str(fileEntry))
+                        compatibility_items[compatibility_entry] = file_full_name
                     
                 # default
                 if default_size_name == size_name:
-                    fout.write("    <file alias=\"%s/%s/%s\">%s</file>\n" % (theme_name,'default',fileEntry,file_full_name))                      
+                    fout.write("    <file alias=\"usr/share/icons/%s/%s/%s\">%s</file>\n" % (theme_name,'default',fileEntry,file_full_name))                      
                 
-                fout.write("    <file alias=\"%s/%s/%s\">%s</file>\n" % (theme_name,size_name,fileEntry,file_full_name)) 
+                fout.write("    <file alias=\"usr/share/icons/%s/%s/%s\">%s</file>\n" % (theme_name,size_name,fileEntry,file_full_name)) 
                 
 #print compatibility_items    
 for key in compatibility_items:

@@ -137,31 +137,59 @@ class QXFileSelector(QWidget):
             self.edt.setText(fileName)
 
 
-class QXCheckBoxes(QWidget):
+class QXSelects(QWidget):
     optionsChanged = pyqtSignal(list)
-    def __init__(self,init,radio = False,parent = None):
+
+    SUB_TYPE_CHECKBOX = 1
+    SUB_TYPE_RADIO    = 2
+    SUB_TYPE_COMBO    = 3
+    
+    def __init__(self,init,sub_type = SUB_TYPE_CHECKBOX,parent = None):
         QWidget.__init__(self,parent)
         
         self.chk = {}
         self.init = init
-        self.radio = radio
+        self.sub_type = sub_type
         
         l = QVBoxLayout()
         l.setMargin(0)
+
+        if sub_type == self.SUB_TYPE_COMBO:
+            cbx = QComboBox(parent)
+
+        cbx_init_index = 0
         
-        for item in init:
-            if radio:
-                chk = QRadioButton(item[0])
+        for i,item in enumerate(init):
+            if sub_type == self.SUB_TYPE_COMBO:
+                cbx.addItem(item[0],item[1])  
+                if item[2]:
+                    cbx_init_index = i
             else:
-                chk = QCheckBox(item[0])
-            chk.setChecked(item[2])
-            self.chk[item[1]] = chk
-            
-            l.addWidget(chk)
-            chk.clicked.connect(self.onCheckChange)
-            
+                
+                if sub_type == self.SUB_TYPE_RADIO:
+                    chk = QRadioButton(item[0])
+                else:
+                    chk = QCheckBox(item[0])
+                chk.setChecked(item[2])
+                self.chk[item[1]] = chk
+                
+                l.addWidget(chk)
+                chk.clicked.connect(self.onCheckChange)
+                
+        if sub_type == self.SUB_TYPE_COMBO:
+            l.addWidget(cbx)
+            cbx.setCurrentIndex(cbx_init_index)
+            cbx.currentIndexChanged.connect(self.onCurrentIndexChanged)
         self.setLayout(l)
-            
+    
+    def onCurrentIndexChanged(self,index):
+        for i,item in enumerate(self.init):
+            if i == index:
+                self.init[i][2] = True
+            else:
+                self.init[i][2] = False
+        self.optionsChanged.emit(self.init)
+        
     def onCheckChange(self):
         for i,item in enumerate(self.init):
             chk = self.chk[item[1]]
@@ -179,6 +207,7 @@ class QXStaticConfig(QMainWindow):
     Options = 6
     Selection = 7
     YesNo = 8
+    List = 9
     
     def __init__(self,parent = None):
         QMainWindow.__init__(self,parent)
@@ -186,6 +215,7 @@ class QXStaticConfig(QMainWindow):
         self.tbrMain = self.addToolBar("Main")
         self.tbrMain.setFloatable(False)
         self.tbrMain.setMovable(False)
+        self.actions = []
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.mainWidget = QStackedWidget() 
         
@@ -276,6 +306,11 @@ class QXStaticConfig(QMainWindow):
             self.mainWidget.setCurrentIndex(page_id)
         return onAction
     
+    def cloGetActionSetIcon(self,page_id):
+        def setIcon(icon):
+            self.actions[page_id].setIcon(icon)
+        return setIcon
+    
     def addConfigPage(self,conf):
         
         page = QWidget()
@@ -284,9 +319,11 @@ class QXStaticConfig(QMainWindow):
         
         action = QAction(conf['icon'],conf['title'],self,triggered = self.cloOnAction(self.pageID))
         self.tbrMain.addAction(action)
+        self.actions.append(action)
         self.setupConfigPage(conf, self.pageID)
         self.mainWidget.addWidget(page)
         self.pageID += 1
+        
         
     def setupConfigPage(self,conf,pageID):
         """
@@ -480,7 +517,7 @@ class QXStaticConfig(QMainWindow):
                     lay_group.addWidget(label,index,0)
                     lay_group.addWidget(widget,index + 1,0,1,2)
                     index += 2   
-                elif item['item_type'] == self.Options or item['item_type'] == self.Selection:
+                elif item['item_type'] == self.Options or item['item_type'] == self.Selection or item['item_type'] == self.List:
                     try:
                         d = item['item_default']
                     except:
@@ -492,17 +529,20 @@ class QXStaticConfig(QMainWindow):
                     if name_dict != '':
                         d = json.loads(name_dict)
                     
-                    radio = False
+                    sub_type = QXSelects.SUB_TYPE_CHECKBOX
                     if item['item_type'] == self.Selection:
-                        radio = True
+                        sub_type = QXSelects.SUB_TYPE_RADIO
+                    elif item['item_type'] == self.List:
+                        sub_type = QXSelects.SUB_TYPE_COMBO
                         
-                    widget = QXCheckBoxes(d,radio,self)
+                    widget = QXSelects(d,sub_type,self)
                     widget.optionsChanged.connect(self.cloSync(key_item,'dict'))
                     widget.optionsChanged.connect(item['call_back'])
                     item['call_back'](d)
                     lay_group.addWidget(label,index,0)
                     lay_group.addWidget(widget,index + 1,0,1,2)
-                    index += 2                     
+                    index += 2   
+                   
             lay_group_wrap = QVBoxLayout()
             lay_group_wrap.addLayout(lay_group)
             lay_group_wrap.addStretch()
@@ -550,10 +590,10 @@ if __name__ == '__main__':
                              ['Prim School','optPrim',True],
                              ['Mid School','optMid',False],
                         ], 'call_back' : w.nullCallback },
-                    {'item_title' : 'Adv Edu', 'item_type' : QXStaticConfig.Selection,'item_default' : [
+                    {'item_title' : 'Adv Edu', 'item_type' : QXStaticConfig.List,'item_default' : [
                              ['Prim School','optPrim',True],
                              ['Mid School','optMid',False],
-                        ], 'call_back' : w.nullCallback }                     
+                        ], 'call_back' : w.nullCallback }                    
                     ]},
                 {'section_title' : 'bar', 'items' : []}
             ]}

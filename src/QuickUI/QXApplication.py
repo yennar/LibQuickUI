@@ -2,15 +2,43 @@
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from QXThemeManager import *
+
 import platform
 import sys
 import re
 import json
 
+
+
 class QXApplication(QApplication):
-    def __init__(self,*kargs):
-        QApplication.__init__(self,*kargs)
-        
+    
+    _themeManager = None
+    
+    def __init__(self,appArgv,organizationName,appName = ''):
+        QApplication.__init__(self,appArgv)
+        QApplication.setOrganizationName(organizationName)
+        if appName == '':
+            appName = QXApplication.appName()
+        QApplication.setApplicationName(appName)
+        QXApplication._themeManager = QXThemeManager()
+
+    @staticmethod
+    def findIcon(*kargs):
+        return QXApplication._themeManager.findIcon(*kargs)
+
+    @staticmethod
+    def getIconThemeList(*kargs):
+        return QXApplication._themeManager.getIconThemeList(*kargs)
+
+    @staticmethod
+    def getIconThemeCallBack(*kargs):
+        return QXApplication._themeManager.setIconTheme
+    
+    @staticmethod
+    def themeManager():
+        return QXApplication._themeManager
+    
     @staticmethod
     def appName():
         appName = re.sub(r'^.*[\/\\]','',sys.argv[0])
