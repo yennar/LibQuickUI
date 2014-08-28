@@ -1,19 +1,50 @@
- <!DOCTYPE RCC><RCC version="1.0">
- <qresource>
-     <file alias="connect.png">res/connect.png</file>
-     <file alias="disconnect.png">res/disconnect.png</file>
-     <file alias="download.png">res/page_white_put.png</file>
-     <file alias="upload.png">res/page_white_get.png</file>
-     <file alias="refresh.png">res/arrow_rotate_clockwise.png</file>
-     <file alias="account.png">res/user.png</file>
-     <file alias="save.png">res/disk.png</file>
-     <file alias="open.png">res/folder.png</file>
-     <file alias="new.png">res/page_white_text.png</file>
-     <file alias="undo.png">res/arrow_undo.png</file>
-     <file alias="redo.png">res/arrow_redo.png</file>    
-     <file alias="cut.png">res/cut.png</file>
-     <file alias="copy.png">res/page_white_copy.png</file>
-     <file alias="paste.png">res/page_white_paste.png</file> 
-     <file alias="preferences.png">res/cog.png</file>       
- </qresource>
- </RCC>
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file alias="default/default/configure.png">res/usr/share/icons/default/32x32/actions/configure.png</file>
+    <file alias="default/32x32/configure.png">res/usr/share/icons/default/32x32/actions/configure.png</file>
+    <file alias="default/default/document-new.png">res/usr/share/icons/default/32x32/actions/document-new.png</file>
+    <file alias="default/32x32/document-new.png">res/usr/share/icons/default/32x32/actions/document-new.png</file>
+    <file alias="default/default/document-open.png">res/usr/share/icons/default/32x32/actions/document-open.png</file>
+    <file alias="default/32x32/document-open.png">res/usr/share/icons/default/32x32/actions/document-open.png</file>
+    <file alias="default/default/document-save.png">res/usr/share/icons/default/32x32/actions/document-save.png</file>
+    <file alias="default/32x32/document-save.png">res/usr/share/icons/default/32x32/actions/document-save.png</file>
+    <file alias="default/default/edit-copy.png">res/usr/share/icons/default/32x32/actions/edit-copy.png</file>
+    <file alias="default/32x32/edit-copy.png">res/usr/share/icons/default/32x32/actions/edit-copy.png</file>
+    <file alias="default/default/edit-cut.png">res/usr/share/icons/default/32x32/actions/edit-cut.png</file>
+    <file alias="default/32x32/edit-cut.png">res/usr/share/icons/default/32x32/actions/edit-cut.png</file>
+    <file alias="default/default/edit-paste.png">res/usr/share/icons/default/32x32/actions/edit-paste.png</file>
+    <file alias="default/32x32/edit-paste.png">res/usr/share/icons/default/32x32/actions/edit-paste.png</file>
+    <file alias="default/default/edit-redo.png">res/usr/share/icons/default/32x32/actions/edit-redo.png</file>
+    <file alias="default/32x32/edit-redo.png">res/usr/share/icons/default/32x32/actions/edit-redo.png</file>
+    <file alias="default/default/edit-undo.png">res/usr/share/icons/default/32x32/actions/edit-undo.png</file>
+    <file alias="default/32x32/edit-undo.png">res/usr/share/icons/default/32x32/actions/edit-undo.png</file>
+    <file alias="default/default/network-connect.png">res/usr/share/icons/default/32x32/actions/network-connect.png</file>
+    <file alias="default/32x32/network-connect.png">res/usr/share/icons/default/32x32/actions/network-connect.png</file>
+    <file alias="default/default/network-disconnect.png">res/usr/share/icons/default/32x32/actions/network-disconnect.png</file>
+    <file alias="default/32x32/network-disconnect.png">res/usr/share/icons/default/32x32/actions/network-disconnect.png</file>
+    <file alias="default/default/network-download.png">res/usr/share/icons/default/32x32/actions/network-download.png</file>
+    <file alias="default/32x32/network-download.png">res/usr/share/icons/default/32x32/actions/network-download.png</file>
+    <file alias="default/default/network-upload.png">res/usr/share/icons/default/32x32/actions/network-upload.png</file>
+    <file alias="default/32x32/network-upload.png">res/usr/share/icons/default/32x32/actions/network-upload.png</file>
+    <file alias="default/default/user-properties.png">res/usr/share/icons/default/32x32/actions/user-properties.png</file>
+    <file alias="default/32x32/user-properties.png">res/usr/share/icons/default/32x32/actions/user-properties.png</file>
+    <file alias="default/default/view-refresh.png">res/usr/share/icons/default/32x32/actions/view-refresh.png</file>
+    <file alias="default/32x32/view-refresh.png">res/usr/share/icons/default/32x32/actions/view-refresh.png</file>
+    <file alias="cut.png">res/usr/share/icons/default/32x32/actions/edit-cut.png</file>
+    <file alias="copy.png">res/usr/share/icons/default/32x32/actions/edit-copy.png</file>
+    <file alias="preferences.png">res/usr/share/icons/default/32x32/actions/configure.png</file>
+    <file alias="configure.png">res/usr/share/icons/default/32x32/actions/configure.png</file>
+    <file alias="disconnect.png">res/usr/share/icons/default/32x32/actions/network-disconnect.png</file>
+    <file alias="paste.png">res/usr/share/icons/default/32x32/actions/edit-paste.png</file>
+    <file alias="redo.png">res/usr/share/icons/default/32x32/actions/edit-redo.png</file>
+    <file alias="save.png">res/usr/share/icons/default/32x32/actions/document-save.png</file>
+    <file alias="refresh.png">res/usr/share/icons/default/32x32/actions/view-refresh.png</file>
+    <file alias="properties.png">res/usr/share/icons/default/32x32/actions/user-properties.png</file>
+    <file alias="open.png">res/usr/share/icons/default/32x32/actions/document-open.png</file>
+    <file alias="upload.png">res/usr/share/icons/default/32x32/actions/network-upload.png</file>
+    <file alias="new.png">res/usr/share/icons/default/32x32/actions/document-new.png</file>
+    <file alias="download.png">res/usr/share/icons/default/32x32/actions/network-download.png</file>
+    <file alias="connect.png">res/usr/share/icons/default/32x32/actions/network-connect.png</file>
+    <file alias="undo.png">res/usr/share/icons/default/32x32/actions/edit-undo.png</file>
+</qresource>
+</RCC>
