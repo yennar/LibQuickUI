@@ -24,6 +24,14 @@ class QXApplication(QApplication):
         QXApplication._themeManager = QXThemeManager()
 
     @staticmethod
+    def getStyleList(*kargs):
+        return QXApplication._themeManager.getStyleList(*kargs)
+
+    @staticmethod
+    def getStyleCallBack(*kargs):
+        return QXApplication._themeManager.setStyle
+    
+    @staticmethod
     def findIcon(*kargs):
         return QXApplication._themeManager.findIcon(*kargs)
 

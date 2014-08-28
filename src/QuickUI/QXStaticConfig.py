@@ -529,6 +529,8 @@ class QXStaticConfig(QMainWindow):
                     name_dict = str(self.settings.value(key_item,d).toString())
                     if name_dict != '':
                         ds = json.loads(name_dict)
+                    else:
+                        ds = []
 
                     if len(d) != len(ds):
                         ddict = {}

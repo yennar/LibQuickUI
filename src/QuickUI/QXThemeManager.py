@@ -15,6 +15,7 @@ class QXThemeManager(QWidget):
         self.getIconThemeList()
         self.callbacks = {}
         
+        
     def findIcon(self,iconName,sizeSpec='default',callback=None):
         #print "findInon",iconName
         if not callback is None:
@@ -25,23 +26,43 @@ class QXThemeManager(QWidget):
         if self.icon_db is None or self.selected_theme_path == '':
             #print "Use compability icon"
             return QIcon(':%s.png' % str(iconName).lower())
-        
-        d = QDir(self.selected_theme_path + '/' + sizeSpec)
-        #print self.selected_theme_path + '/' + sizeSpec,iconName
-        for picName in d.entryList(['%s.png' % str(iconName).lower()]):
-            #print "Find",picName
-            return QIcon(self.selected_theme_path + '/' + sizeSpec + '/' + picName) 
-        for cato in ['document','edit']:
-            for picName in d.entryList(['%s-%s.png' % (cato,str(iconName).lower())]):
-                #print "Find",picName
-                return QIcon(self.selected_theme_path + '/' + sizeSpec + '/' + picName)             
 
-        for picName in d.entryList(['*-%s.png' % str(iconName).lower()]):
-            #print "Find",picName
-            return QIcon(self.selected_theme_path + '/' + sizeSpec + '/' + picName)         
-        for picName in d.entryList(['*%s*' % str(iconName).lower()]):
-            #print "Find",picName
-            return QIcon(self.selected_theme_path + '/' + sizeSpec + '/' + picName)
+        theme_path = QDir(self.selected_theme_path)
+        
+        if not theme_path.exists(sizeSpec):
+            for sizeSpec in theme_path.entryList(QDir.AllDirs | QDir.NoDotAndDotDot):
+                if sizeSpec == '32x32' or sizeSpec == 'default':
+                    break
+                
+        if not theme_path.exists(sizeSpec):
+            for sizeSpec in theme_path.entryList(QDir.AllDirs | QDir.NoDotAndDotDot):
+                if sizeSpec == '16x16' or sizeSpec == '48x48':
+                    break
+        
+        icon_name_alias = [iconName]
+        if iconName == 'configure':
+            icon_name_alias.append('references')
+            icon_name_alias.append('reference')
+                
+        for iconName in icon_name_alias:
+            for d in [QDir(self.selected_theme_path + '/' + sizeSpec),
+                      QDir(self.selected_theme_path + '/' + sizeSpec + '/actions'),
+                      QDir(self.selected_theme_path + '/' + sizeSpec + '/categories')]:
+                #print d.absolutePath(),iconName
+                for picName in d.entryList(['%s.png' % str(iconName).lower()]):
+                    #print "Find",picName
+                    return QIcon(d.absolutePath() + '/' + picName) 
+                for cato in ['document','edit']:
+                    for picName in d.entryList(['%s-%s.png' % (cato,str(iconName).lower())]):
+                        #print "Find",picName
+                        return QIcon(d.absolutePath() + '/' + picName)             
+        
+                for picName in d.entryList(['*-%s.png' % str(iconName).lower()]):
+                    #print "Find",picName
+                    return QIcon(d.absolutePath() + '/' + picName)         
+                for picName in d.entryList(['*%s*' % str(iconName).lower()]):
+                    #print "Find",picName
+                    return QIcon(d.absolutePath() + '/' + picName)
 
         return QIcon()
 
@@ -80,10 +101,12 @@ class QXThemeManager(QWidget):
                         theme_name = themeRoot.fileName()
                         #print '%s exists' % theme_name
                         themeDir = QDir(themeRoot.filePath())
-                        if themeDir.exists('index.theme'):
+                        if themeDir.exists('index.theme') or themeDir.exists('index.theme.in'):
+                            #print 'index.theme exists'
                             if self.icon_db is None:
                                 self.icon_db = {}
                             self.icon_db[str(theme_name)] = str(themeRoot.filePath())
+            #print self.icon_db
         rsj = str(self.settings.value('0-0-General/Theme/Icon Theme','').toString())
         #print rsj
         rsj_db = {}
@@ -115,6 +138,38 @@ class QXThemeManager(QWidget):
             r.append([item,self.icon_db[item],t])
         #print r
         return r
+    
+    def getStyleList(self):
+        styleList = QStyleFactory.keys()
+        rsj = str(self.settings.value('0-0-General/Theme/Style','').toString())
+        #print rsj
+        rsj_db = {}
+        if rsj != '':
+            try:
+                rsj_p = json.loads(rsj)
+                for item in rsj_p:
+                    k = str(item[0])
+                    rsj_db[k] = item[2]
+                    #print k,len(k)
+            except:
+                pass        
+        r = []
+        for item in styleList:
+            t = False
+            k = str(item)
+            if k in rsj_db.keys() and rsj_db[k]:
+                t = True
+                QApplication.setStyle(QStyleFactory.create(k))             
+            item = str(item)
+            r.append([item,item,t])
+        #print r
+        return r    
+    
+    def setStyle(self,d):
+        for item in d:
+            if item[2]:
+                QApplication.setStyle(QStyleFactory.create(item[0]))
+                break
     
 if __name__ == '__main__':
     d = QDir(':/')

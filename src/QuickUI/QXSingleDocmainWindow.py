@@ -118,10 +118,15 @@ class QXSingleDocMainWindow(QMainWindow):
         
         self.addPreferencePage('General',QXApplication.findIcon('configure','default',self.preferenceDialog.cloGetActionSetIcon(0)),[{'group_title' : '' , 'items' : [
                       {'section_title' : 'Theme', 'items' : [
+                        {'item_title' : 'Style',
+                         'item_type' : QXStaticConfig.List ,
+                         'item_default' : QXApplication.getStyleList() ,
+                         'call_back' : QXApplication.getStyleCallBack() },                          
                         {'item_title' : 'Icon Theme',
                          'item_type' : QXStaticConfig.List ,
                          'item_default' : QXApplication.getIconThemeList() ,
                          'call_back' : QXApplication.getIconThemeCallBack() }
+                        
                     ]}
                 ]}])
     
