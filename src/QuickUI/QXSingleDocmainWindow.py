@@ -364,10 +364,3 @@ class QXSingleDocMainWindow(QMainWindow):
         e.accept()
         return                  
             
-if __name__ == '__main__':
-    import sys
-    app = QXApplication(sys.argv,'QuickUI')
-    edit = QTextEdit()
-    w = QXSingleDocMainWindow(edit)
-    w.show()
-    app.exec_()

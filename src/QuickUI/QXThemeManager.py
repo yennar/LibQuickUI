@@ -177,7 +177,10 @@ class QXThemeManager(QWidget):
     def setStyle(self,d):
         for item in d:
             if item[2]:
-                QApplication.setStyle(QStyleFactory.create(item[1]))
+                try:
+                    QApplication.setStyle(QStyleFactory.create(item[1]))
+                except:
+                    pass
                 break
             
     def getDefaultSystemStyle(self):
@@ -186,7 +189,7 @@ class QXThemeManager(QWidget):
         if platform.system() == 'Darwin':
             style_key = 'Mac'
         elif platform.system() == 'Linux':
-            style_key = 'Gtk'
+            style_key = 'GTK'
         elif platform.system() == 'Windows':
             style_key = 'Win'
         

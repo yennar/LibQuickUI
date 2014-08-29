@@ -533,16 +533,19 @@ class QXStaticConfig(QMainWindow):
                         ds = []
 
                     if len(d) != len(ds):
-                        ddict = {}
-                        for item_d in ds:
-                            ddict[item_d[0] + item_d[1]] = item_d[2]
-                        nd = []
-                        for item_d in d:
-                            key = item_d[0] + item_d[1]
-                            if key in ddict.keys():
-                                item_d[2] = ddict[key]
-                            nd.append(item_d)
-                        d = nd
+                        try:
+                            ddict = {}
+                            for item_d in ds:
+                                ddict[item_d[0] + item_d[1]] = item_d[2]
+                            nd = []
+                            for item_d in d:
+                                key = item_d[0] + item_d[1]
+                                if key in ddict.keys():
+                                    item_d[2] = ddict[key]
+                                nd.append(item_d)
+                            d = nd
+                        except:
+                            pass
                     
                     sub_type = QXSelects.SUB_TYPE_CHECKBOX
                     if item['item_type'] == self.Selection:
