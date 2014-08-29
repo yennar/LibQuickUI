@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='LibQuickUI',
-      version='1.1',
+      version='1.3',
       description='UI Extension to PyQt',
       author='Yennar',
       url='https://github.com/yennar/LibQuickUI',
