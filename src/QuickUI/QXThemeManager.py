@@ -185,17 +185,18 @@ class QXThemeManager(QWidget):
             
     def getDefaultSystemStyle(self):
         styleList = QStyleFactory.keys()
-        style_key = ''
+        style_keys = []
         if platform.system() == 'Darwin':
-            style_key = 'Mac'
+            style_keys = ['Mac']
         elif platform.system() == 'Linux':
-            style_key = 'GTK'
+            style_keys = ['GTK','CDE','Clean']
         elif platform.system() == 'Windows':
-            style_key = 'Win'
+            style_keys = ['Vista','Win']
         
         for style_item in styleList:
-            if re.match('.*' + style_key + '.*',str(style_item)):
-                return str(style_item)
+            for style_key in style_keys:
+                if re.match('.*' + style_key + '.*',str(style_item)):
+                    return str(style_item)
     
 if __name__ == '__main__':
     d = QDir(':/')
