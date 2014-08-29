@@ -4,6 +4,8 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import quick_ui_res
 import json
+import platform
+import re
 
 class QXThemeManager(QWidget):
     def __init__(self,parent = None):
@@ -14,6 +16,9 @@ class QXThemeManager(QWidget):
         self.icon_db = None
         self.getIconThemeList()
         self.callbacks = {}
+        
+        #self.defaultStyleName = QApplication.style().metaObject().className()
+        #print self.defaultStyleName
         
         
     def findIcon(self,iconName,sizeSpec='default',callback=None):
@@ -154,22 +159,40 @@ class QXThemeManager(QWidget):
             except:
                 pass        
         r = []
+        use_default = True
         for item in styleList:
             t = False
             k = str(item)
             if k in rsj_db.keys() and rsj_db[k]:
                 t = True
+                use_default = False
                 QApplication.setStyle(QStyleFactory.create(k))             
             item = str(item)
             r.append([item,item,t])
+        default_style_key = self.getDefaultSystemStyle()    
+        r.append(['System (%s)' % default_style_key,default_style_key,use_default])
         #print r
         return r    
     
     def setStyle(self,d):
         for item in d:
             if item[2]:
-                QApplication.setStyle(QStyleFactory.create(item[0]))
+                QApplication.setStyle(QStyleFactory.create(item[1]))
                 break
+            
+    def getDefaultSystemStyle(self):
+        styleList = QStyleFactory.keys()
+        style_key = ''
+        if platform.system() == 'Darwin':
+            style_key = 'Mac'
+        elif platform.system() == 'Linux':
+            style_key = 'Gtk'
+        elif platform.system() == 'Windows':
+            style_key = 'Win'
+        
+        for style_item in styleList:
+            if re.match('.*' + style_key + '.*',str(style_item)):
+                return str(style_item)
     
 if __name__ == '__main__':
     d = QDir(':/')

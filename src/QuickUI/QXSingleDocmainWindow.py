@@ -16,13 +16,13 @@ import json
 
 class QXSingleDocMainWindow(QMainWindow):
     
-    def __init__(self,parent=None):
+    def __init__(self,mainWidget = None,parent=None):
         QMainWindow.__init__(self,parent)
-        self.initDefaultUI()
+        self.initDefaultUI(mainWidget)
         
         
 
-    def initDefaultUI(self,hasToolBar = True,hasMenuBar = True):
+    def initDefaultUI(self,mainWidget = None,hasToolBar = True,hasMenuBar = True):
         d = QApplication.desktop()
         screenWidget = d.screen(d.primaryScreen())
         w = screenWidget.size().height()
@@ -115,9 +115,8 @@ class QXSingleDocMainWindow(QMainWindow):
 
         self.preferenceDialog = QXStaticConfig()
         self.preferenceDialog.setWindowTitle("%s - Preferences" % QXApplication.appName())
-        
-        self.addPreferencePage('General',QXApplication.findIcon('configure','default',self.preferenceDialog.cloGetActionSetIcon(0)),[{'group_title' : '' , 'items' : [
-                      {'section_title' : 'Theme', 'items' : [
+
+        system_items = [
                         {'item_title' : 'Style',
                          'item_type' : QXStaticConfig.List ,
                          'item_default' : QXApplication.getStyleList() ,
@@ -125,10 +124,38 @@ class QXSingleDocMainWindow(QMainWindow):
                         {'item_title' : 'Icon Theme',
                          'item_type' : QXStaticConfig.List ,
                          'item_default' : QXApplication.getIconThemeList() ,
-                         'call_back' : QXApplication.getIconThemeCallBack() }
-                        
+                         'call_back' : QXApplication.getIconThemeCallBack() }                        
+                      ]
+
+        if mainWidget is None:
+            mainWidget = QWidget()
+        
+        
+        self.setCentralWidget(mainWidget)
+        mainWidget.setFocus()
+        
+        try:
+            mainWidget.undoAvailable.connect(self.actionEditUndo.setEnabled)
+            mainWidget.redoAvailable.connect(self.actionEditRedo.setEnabled)
+        except:
+            pass
+        
+        try:
+            system_items.append({'item_title' : 'Font',
+                         'item_type' : QXStaticConfig.Font ,
+                         'item_default' : mainWidget.currentFont() ,
+                         'call_back' : mainWidget.setCurrentFont
+                         })
+        except:
+            pass
+        
+        self.addPreferencePage('General',QXApplication.findIcon('configure','default',self.preferenceDialog.cloGetActionSetIcon(0)),
+                   [{'group_title' : '' , 
+                    'items' : [
+                      {'section_title' : 'Theme', 'items' : system_items}
                     ]}
-                ]}])
+                  ])
+        self.setEditUndoRedoStatus(False,False)
     
     def addPreferencePage(self,title,icon,conf):
         self.preferenceDialog.addConfigPage(
@@ -179,6 +206,8 @@ class QXSingleDocMainWindow(QMainWindow):
         else:
             self.setWindowTitle("%s (Read Only) - %s" % (self._fileName,self.appName))
             
+        
+            
     def fileName(self):
         return self._fileName
     
@@ -219,32 +248,96 @@ class QXSingleDocMainWindow(QMainWindow):
         
 
     def onFileLoad(self):
-        pass
+        suc = False
+        mainWidget = self.centralWidget()
+        mainWidget.setFocus()
+        try:
+            mainWidget.load(self.fileName)
+            suc = True
+        except:
+            fin = QFile(self._fileName)
+            if fin.open(QIODevice.ReadOnly):
+                s = str(fin.readAll())
+                try:
+                    mainWidget.setText(s)
+                    suc = True
+                except:
+                    try:
+                        mainWidget.setPlainText(s)
+                        suc = True
+                    except:
+                        pass
+            fin.close()
+        self.loadFinished(suc)
+        self.updateStatusBarMessage('Ready')
 
+    def onDefaultSaveBeh(self,fileName):
+        mainWidget = self.centralWidget()
+        mainWidget.setFocus()
+        try:
+            mainWidget.save(fileName)
+            return True
+        except:
+            fin = QFile(self._fileName)
+            if fin.open(QIODevice.WriteOnly):
+                try:
+                    text = mainWidget.text()
+                    fin.write(str(text))
+                except:
+                    try:
+                        text = mainWidget.toPlainText()
+                        fin.write(str(text))
+                        return True
+                    except:
+                        return False  
+                fin.close()
+            else:
+                return False  
+    
     def onFileSaveAs(self,fileName):
-        return False
+        return self.onDefaultSaveBeh(fileName)
     
     def onFileSave(self,fileName):
-        pass
+        return self.onDefaultSaveBeh(fileName)
 
     def setEditUndoRedoStatus(self,canUndo,canRedo):
         self.actionEditUndo.setEnabled(canUndo)
         self.actionEditRedo.setEnabled(canRedo)
 
     def onEditUndo(self):
-        pass
+        mainWidget = self.centralWidget()
+        try:
+            mainWidget.undo()
+        except:
+            pass
     
     def onEditRedo(self):
-        pass
+        mainWidget = self.centralWidget()
+        try:
+            mainWidget.redo()
+        except:
+            pass
     
     def onEditCut(self):
-        pass
+        mainWidget = self.centralWidget()
+        try:
+            mainWidget.cut()
+        except:
+            pass
     
     def onEditCopy(self):
-        pass
+        mainWidget = self.centralWidget()
+        try:
+            mainWidget.copy()
+        except:
+            pass
     
     def onEditPaste(self):
-        pass
+        mainWidget = self.centralWidget()
+        try:
+            mainWidget.paste()
+        except:
+            pass
     
     def updateStatusBarMessage(self,s):
         self.statusBar().showMessage(s)
@@ -274,6 +367,7 @@ class QXSingleDocMainWindow(QMainWindow):
 if __name__ == '__main__':
     import sys
     app = QXApplication(sys.argv,'QuickUI')
-    w = QXSingleDocMainWindow()
+    edit = QTextEdit()
+    w = QXSingleDocMainWindow(edit)
     w.show()
     app.exec_()
